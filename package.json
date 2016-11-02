@@ -1,0 +1,24 @@
+{
+  "name": "polymer-brunch",
+  "version": "1.0.0",
+  "description": "Adds Polymer's Vulcanize and crisper support to brunch.",
+  "author": "OvermindDL1 (https://overminddl1.com/)",
+  "homepage": "https://github.com/overminddl1/polymer-brunch",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:overminddl1/polymer-brunch.git"
+  },
+  "scripts": {
+    "test": "node_modules/.bin/eslint index.js && node_modules/.bin/mocha"
+  },
+  "dependencies": {
+    "crisper": "^2.0.2",
+    "vulcanize": "^1.14.8"
+  },
+  "devDependencies": {
+    "chai": "~3.4.1",
+    "eslint": "^1.10.3",
+    "mocha": "~2.3.4"
+  }
+}
