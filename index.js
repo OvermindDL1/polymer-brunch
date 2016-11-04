@@ -1,5 +1,7 @@
 'use strict';
 
+const cat = require('./lib/cat');
+
 const FS = require('fs');
 const Path = require('path');
 const Vulcanize = require('vulcanize');
@@ -17,9 +19,6 @@ class PolymerBrunchPlugin {
     this.publicPath = config.paths.public;
 
     this.config = config && config.plugins && config.plugins.polymer || {};
-
-    // Use copycat-brunch if you want something like this:  https://github.com/cmelgarejo/copycat-brunch
-    // if(this.config.copyPathsToPublic === undefined) this.config.copyPathsToPublic = {}
 
     this.paths = this.config.paths || {};
     if(this.paths._global === undefined) {
@@ -48,6 +47,13 @@ class PolymerBrunchPlugin {
         }));
       }
     });
+
+    if(this.config.copyPathsToPublic === undefined) this.config.copyPathsToPublic = {};
+    if(this.config.copyPathsToPublic.paths === undefined) this.config.copyPathsToPublic.paths = {};
+    if(this.config.copyPathsToPublic.verbosity === undefined) this.config.copyPathsToPublic.verbosity = 1;
+    if(this.config.copyPathsToPublic.onlyChanged === undefined) this.config.copyPathsToPublic.onlyChanged = false;
+    cat.setVerbosity(this.config.copyPathsToPublic.verbosity);
+    cat.setOnlyChanged(this.config.copyPathsToPublic.onlyChanged);
 
     // this.vulcanize = this.config.vulcanize || {};
     // this.vulcanize.options = this.vulcanize.options || {};
@@ -152,16 +158,28 @@ class PolymerBrunchPlugin {
   // Executed when each compilation is finished.
   // Examples: Hot-reload (send a websocket push).
   // onCompile(files) {}
-  // onCompile(files) {
-  //   const self = this;
-  //   const copyPathsToPublic = this.config.copyPathsToPublic;
-  //   for(var key in copyPathsToPublic) {
-  //     if(copyPathsToPublic.hasOwnProperty(key)) {
-  //       const pathFrom = key;
-  //       const pathTo = copyPathsToPublic[key];
-  //     }
-  //   }
-  // }
+  onCompile(files) {
+    const self = this;
+    const copyPathsToPublic = this.config.copyPathsToPublic;
+    const paths = copyPathsToPublic.paths;
+    for(var key in paths) {
+      if(paths.hasOwnProperty(key)) {
+        const pathTo = key;
+        const pathsFrom = paths[key];
+        // TODO:  Change this to support globbing via `require('glob')`
+        if(typeof pathTo === 'string') {
+          if(typeof pathsFrom === 'string') {
+            cat.copyFolderRecursiveAsync(pathsFrom, Path.posix.join(self.publicPath, pathTo));
+          }
+          else if(typeof pathsFrom === 'object') {
+            pathsFrom.forEach((pathFrom) => {
+              cat.copyFolderRecursiveAsync(pathFrom, Path.posix.join(self.publicPath, pathTo));
+            });
+          }
+        }
+      }
+    }
+  }
 
   // Allows to stop web-servers & other long-running entities.
   // Executed before Brunch process is closed.
