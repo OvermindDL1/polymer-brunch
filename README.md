@@ -16,14 +16,15 @@ A sample `brunch-config.js` plugin section with defaults and comments:
 ```javascript
   plugins: {
     polymer: {
-      vulcanize: { // A top-level vulcanize is the 'default' path for files that do not match any in 'paths'
-        options: { // These are normal vulcanize options passed as-is
+      vulcanize: { // A top-level vulcanize is the 'default' path for files that do not match any in 'paths'.
+        options: { // These are normal vulcanize options passed as-is.
           abspath: "web/static",
           stripComments: true
         }
       },
       crisper: {  // A top-level crisper is the 'default' path for files that do not match any in 'paths'
-        options: {}, // These are normal crisper options passed as-is
+        disabled: false, // If true then the vulcanized file is not split.
+        options: {}, // These are normal crisper options passed as-is.
       },
       paths: {
         // The key is matched to the end of the path, if this file in the key
@@ -47,7 +48,9 @@ A sample `brunch-config.js` plugin section with defaults and comments:
         // then summary per directory recursed into, if 3 then each and every
         // file that is copied is printed.
         verbosity: 1,
-        // onlyChanged: If true then compares timestamps before copying
+        // onlyChanged: If true then compares timestamps before copying, this is
+        // only useful when 'watch' is used, it will always copy files
+        // regardless when just doing a normal build.
         onlyChanged: true
       }
     }
