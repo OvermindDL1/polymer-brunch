@@ -10,6 +10,9 @@
     "url": "git@github.com:overminddl1/polymer-brunch.git"
   },
   "scripts": {
+    "release:major": "changelog -M && git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && npm version major && git push origin && git push origin --tags",
+    "release:minor": "changelog -m && git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && npm version minor && git push origin && git push origin --tags",
+    "release:patch": "changelog -p && git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && npm version patch && git push origin && git push origin --tags",
     "test": "node_modules/.bin/eslint index.js && node_modules/.bin/mocha"
   },
   "dependencies": {
@@ -20,6 +23,7 @@
   "devDependencies": {
     "chai": "~3.4.1",
     "eslint": "^1.10.3",
-    "mocha": "~2.3.4"
+    "mocha": "~2.3.4",
+    "generate-changelog": "^1.0.2"
   }
 }
