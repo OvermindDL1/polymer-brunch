@@ -1,5 +1,20 @@
 # 1.1.0 (2016-11-4)
 
-# polymer-brunch 1.0.0 (Nov 2, 2016)
+- Now usable
+
+# 1.0.0 (2016-11-02)
 
 - Initial release
+
+# 0.0.0
+
+## Valid Tags:
+
+- chore
+- docs
+- feat
+- fix
+- other
+- refactor
+- style
+- test
