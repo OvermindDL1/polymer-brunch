@@ -11,6 +11,49 @@ Or, do manual install:
 - Add `"polymer-brunch": "~x.y.z"` to `package.json` of your brunch app.
 - If you want to use git version of plugin, use the GitHub URI `"polymer-brunch": "overminddl1/polymer-brunch"`.
 
+A sample `brunch-config.js` plugin section with defaults and comments:
+
+```javascript
+  plugins: {
+    polymer: {
+      vulcanize: { // A top-level vulcanize is the 'default' path for files that do not match any in 'paths'
+        options: { // These are normal vulcanize options passed as-is
+          abspath: "web/static",
+          stripComments: true
+        }
+      },
+      crisper: {  // A top-level crisper is the 'default' path for files that do not match any in 'paths'
+        options: {}, // These are normal crisper options passed as-is
+      },
+      paths: {
+        // The key is matched to the end of the path, if this file in the key
+        // is being compiled now then the global culvanize and crisper are not
+        // not used at all.  This can also be a regex matcher.
+        "somefile.polymer" : {
+          vulcanize: {} // Specifies vulcanize's options, the global version is unused
+          // If one is undefined, like crisper here, then it has no settings
+          // used, not even the global will be used, this is fully distinct.
+        }
+      }
+      copyPathsToPublic: { // A set of paths to copy.
+        paths: {
+          "webcomponents/_polymer": [ // Place in 'public' to copy to
+            "web/static/webcomponents/_polymer"
+            // List of files to copy from, if this is a directory then copy all
+            // the files in the directory, not the directory itself.
+          ]
+        },
+        // verbosity: If 0 then no logging, if 1 then single line summary, if 2
+        // then summary per directory recursed into, if 3 then each and every
+        // file that is copied is printed.
+        verbosity: 1,
+        // onlyChanged: If true then compares timestamps before copying
+        onlyChanged: true
+      }
+    }
+  }
+```
+
 # License
 
 The MIT License (MIT)
