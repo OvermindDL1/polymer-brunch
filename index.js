@@ -116,10 +116,18 @@ class PolymerBrunchPlugin {
             reject(err);
           }
           else {
-            if(crisper.disabled) resolve(inlinedHtml);
+            const filename = self.getFilenameWithNewExt(Path.basename(filepath), '.html');
+            if(crisper.disabled) {
+              FS.writeFile(Path.posix.join(crisper.options.htmlOutputPath, filename), output.html, (e) => {
+                if(e) {
+                  console.log("Error while splitting", path, "with", e);
+                  reject(e);
+                }
+                else resolve("/* No inline JS */");
+              });
+            }
             else {
               var output = crisper.process(inlinedHtml);
-              const filename = self.getFilenameWithNewExt(Path.basename(filepath), '.html');
               FS.writeFile(Path.posix.join(crisper.options.htmlOutputPath, filename), output.html, (e) => {
                 if(e) {
                   console.log("Error while splitting", path, "with", e);
