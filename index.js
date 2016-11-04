@@ -13,20 +13,54 @@ const FSUrlLoader = require('polymer-analyzer/lib/url-loader/fs-url-loader').FSU
 // Remove everything your plugin doesn't need.
 class PolymerBrunchPlugin {
   constructor(config) {
+    const self = this;
+    this.publicPath = config.paths.public;
+
     this.config = config && config.plugins && config.plugins.polymer || {};
 
-    this.vulcanize = this.config.vulcanize || {};
-    this.vulcanize.options = this.vulcanize.options || {};
-    if(this.vulcanize.options.abspath === undefined) {
-      this.vulcanize.options.abspath = process.cwd();
-    }
-    this.vulcanize._global = new Vulcanize(this.vulcanize.options);
+    // Use copycat-brunch if you want something like this:  https://github.com/cmelgarejo/copycat-brunch
+    // if(this.config.copyPathsToPublic === undefined) this.config.copyPathsToPublic = {}
 
-    this.crisper = this.config.crisper || {};
-    this.crisper.options = this.crisper.options || {};
-    if(this.crisper.options.htmlOutputPath === undefined) {
-      this.crisper.options.htmlOutputPath = Path.posix.join(config.paths.public, "webcomponents");
+    this.paths = this.config.paths || {};
+    if(this.paths._global === undefined) {
+      this.paths._global = {
+        vulcanize: this.config.vulcanize,
+        crisper: this.config.crisper,
+      }
     }
+
+    Object.keys(this.paths).map(function(key, _index) {
+      const conf = self.paths[key];
+      if(conf.vulcanize === undefined) conf.vulcanize = {}
+      if(conf.vulcanize.options === undefined) conf.vulcanize.options = {}
+      if(conf.vulcanize.options.abspath === undefined) conf.vulcanize.options.abspath = "";
+      if(conf.vulcanize._exec === undefined) conf.vulcanize._exec = new Vulcanize(conf.vulcanize.options)
+      conf.vulcanize.process = (filepath, callback) => { conf.vulcanize._exec.process(filepath, callback); }
+
+      if(conf.crisper === undefined) conf.crisper = {}
+      if(conf.crisper.options === undefined) conf.crisper.options = {}
+      if(conf.crisper.options.htmlOutputPath === undefined) conf.crisper.options.htmlOutputPath = Path.posix.join(self.publicPath, "webcomponents");
+      conf.crisper.process = (inlinedHtml) => {
+        return Crisper(Object.assign({}, conf.crisper.options, {
+          source: inlinedHtml,
+          onlySplit: true,
+          alwaysWriteScript: true,
+        }));
+      }
+    });
+
+    // this.vulcanize = this.config.vulcanize || {};
+    // this.vulcanize.options = this.vulcanize.options || {};
+    // if(this.vulcanize.options.abspath === undefined) {
+    //   this.vulcanize.options.abspath = "";
+    // }
+    // this.vulcanize._global = new Vulcanize(this.vulcanize.options);
+    //
+    // this.crisper = this.config.crisper || {};
+    // this.crisper.options = this.crisper.options || {};
+    // if(this.crisper.options.htmlOutputPath === undefined) {
+    //   this.crisper.options.htmlOutputPath = Path.posix.join(config.paths.public, "webcomponents");
+    // }
 
     // console.log("Polymer Brunch Plugin Loaded 1");
   }
@@ -34,6 +68,16 @@ class PolymerBrunchPlugin {
   getFilenameWithNewExt(filename, newExt) {
     const ext = Path.extname(filename);
     return filename.slice(0, -ext.length) + newExt;
+  }
+
+  getConfig(filepath) {
+    const paths = this.paths;
+    for(var key in paths) {
+      if(paths.hasOwnProperty(key)) {
+        if((key instanceof RegExp && key.test(filepath)) || key.endsWith(filepath)) return paths[key];
+      }
+    }
+    return paths._global;
   }
 
   // file: File => Promise[Boolean]
@@ -47,28 +91,40 @@ class PolymerBrunchPlugin {
   // compile(file) { return Promise.resolve(file); }
   compile({data, path}) {
     const self = this;
-    //  TODO:  Get filename and look it up as an option to override a global options for both vulcanize and crisper:
-    const vulcanize = self.vulcanize;
-    const crisper = self.crisper;
     return new Promise((resolve, reject) => {
-      vulcanize._global.process(path, (err, inlinedHtml) => {
-        if(err) reject(err);
-        else {
-          if(crisper == 'disabled') resolve(inlinedHtml);
-          else {
-            var output = Crisper(Object.assign(crisper.options, {
-              source: inlinedHtml,
-              onlySplit: true,
-              alwaysWriteScript: true,
-            }));
-            const filename = self.getFilenameWithNewExt(Path.basename(path), '.html');
-            FS.writeFile(Path.posix.join(crisper.options.htmlOutputPath, filename), output.html, (e) => {
-              if(e) reject(e);
-              else resolve(output.js);
-            });
+      const publicPath = self.publicPath;
+      const conf = self.getConfig(path);
+      const vulcanize = conf.vulcanize;
+      const crisper = conf.crisper;
+      const abspath = vulcanize.options.abspath;
+      const filepath = path.substring(abspath.length);
+      const copyTo = vulcanize.options.copyTo;
+      if(!path.startsWith(abspath)) {
+        console.log("Warning: Skipping, File '" + path + "' is not on the abspath of: " + abspath);
+        reject("Warning: Skipping, File '" + path + "' is not on the abspath of: " + abspath);
+      }
+      else {
+        vulcanize.process(filepath, (err, inlinedHtml) => {
+          if(err) {
+            console.log("Error while compiling", path, "with", err);
+            reject(err);
           }
-        }
-      });
+          else {
+            if(crisper.disabled) resolve(inlinedHtml);
+            else {
+              var output = crisper.process(inlinedHtml);
+              const filename = self.getFilenameWithNewExt(Path.basename(filepath), '.html');
+              FS.writeFile(Path.posix.join(crisper.options.htmlOutputPath, filename), output.html, (e) => {
+                if(e) {
+                  console.log("Error while splitting", path, "with", e);
+                  reject(e);
+                }
+                else resolve(output.js);
+              });
+            }
+          }
+        });
+      }
     });
   }
 
@@ -97,7 +153,14 @@ class PolymerBrunchPlugin {
   // Examples: Hot-reload (send a websocket push).
   // onCompile(files) {}
   // onCompile(files) {
-  //   console.log("POLYMER", "onCompile", files);
+  //   const self = this;
+  //   const copyPathsToPublic = this.config.copyPathsToPublic;
+  //   for(var key in copyPathsToPublic) {
+  //     if(copyPathsToPublic.hasOwnProperty(key)) {
+  //       const pathFrom = key;
+  //       const pathTo = copyPathsToPublic[key];
+  //     }
+  //   }
   // }
 
   // Allows to stop web-servers & other long-running entities.
