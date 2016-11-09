@@ -118,9 +118,9 @@ class PolymerBrunchPlugin {
           else {
             const filename = self.getFilenameWithNewExt(Path.basename(filepath), '.html');
             if(crisper.disabled) {
-              FS.writeFile(Path.posix.join(crisper.options.htmlOutputPath, filename), output.html, (e) => {
+              FS.writeFile(Path.posix.join(crisper.options.htmlOutputPath, filename), inlinedHtml, (e) => {
                 if(e) {
-                  console.log("Error while splitting", path, "with", e);
+                  console.log("Error while writing out", path, "with", e);
                   reject(e);
                 }
                 else resolve("/* No inline JS */");
@@ -130,7 +130,7 @@ class PolymerBrunchPlugin {
               var output = crisper.process(inlinedHtml);
               FS.writeFile(Path.posix.join(crisper.options.htmlOutputPath, filename), output.html, (e) => {
                 if(e) {
-                  console.log("Error while splitting", path, "with", e);
+                  console.log("Error while writing split file from", path, "with", e);
                   reject(e);
                 }
                 else resolve(output.js);
