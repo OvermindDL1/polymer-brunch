@@ -80,7 +80,7 @@ class PolymerBrunchPlugin {
     const paths = this.paths;
     for(var key in paths) {
       if(paths.hasOwnProperty(key)) {
-        if((key instanceof RegExp && key.test(filepath)) || key.endsWith(filepath)) return paths[key];
+        if((key instanceof RegExp && key.test(filepath)) || filepath.endsWith(key)) return paths[key];
       }
     }
     return paths._global;
