@@ -35,7 +35,7 @@ A sample `brunch-config.js` plugin section with defaults and comments:
           // If one is undefined, like crisper here, then it has no settings
           // used, not even the global will be used, this is fully distinct.
         }
-      }
+      },
       copyPathsToPublic: { // A set of paths to copy.
         paths: {
           "webcomponents/_polymer": [ // Place in 'public' to copy to
